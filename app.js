@@ -315,6 +315,40 @@ for (let i = 1; i <= 32; i += 1) {
 
 const solutionRoot = document.querySelector("#cozumler");
 
+const detailGuides = {
+  turkce: [
+    "Soruda önce kök ifadeyi bul: 'hangisi', 'ulaşılamaz', 'boşluk', 'altı çizili söz' gibi kelimeler senden ne istediğini söyler.",
+    "Metindeki ipucunu seçeneklere tek tek taşı. Kulağa güzel gelen seçeneği değil, metindeki anlamı bire bir karşılayan seçeneği işaretle.",
+    "Yanlış seçenekler genellikle metinde olmayan yorum ekler, anlamı daraltır ya da küçük bir kelimeyle yön değiştirir. Bu yüzden son karar cümledeki ana anlama göre verilir.",
+  ],
+  sosyal: [
+    "Önce soru kökünün hangi bilgiyi istediğini ayır: tarihsel sonuç, coğrafi yorum, felsefi kavram ya da din kültürü çıkarımı.",
+    "Verilen metin/harita/görselde açıkça desteklenen bilgiyi seç. Sosyal sorularda seçenek doğru bilgi olsa bile parçada yoksa cevap olmaz.",
+    "Son adımda seçenekleri 'metinde var mı, yok mu?' diye eleyince doğru şık tek kalır.",
+  ],
+  matematik: [
+    "Sorudaki verilenleri küçük küçük yaz: sayı, oran, uzunluk, süre ya da alan bilgilerini ayrı düşün.",
+    "Bilinmeyene x de, sonra verilen ilişkiyi denklem/oran haline getir. Büyük işlem yapmadan önce birimlerin aynı olduğundan emin ol.",
+    "Sonuç seçeneklerde aranırken sorunun 'en az', 'en çok', 'kaçtır' gibi istediği son değere cevap verdiğinden emin ol.",
+  ],
+  fen: [
+    "Önce konu başlığını yakala: kuvvet-hareket, basınç, optik, kimyasal türler, tepkime, hücre ya da kalıtım.",
+    "Formül veya kuralı doğrudan uygula; görsel varsa yön, büyüklük, sıra ve karşılaştırma bilgilerini tek tek not et.",
+    "Fen sorularında çoğu hata kesin bilgiyle yorum bilgisini karıştırmaktan gelir. Sadece verilenlerden kesin çıkan seçeneği işaretle.",
+  ],
+};
+
+function buildSteps(testId, topic, detail, answer) {
+  const guide = detailGuides[testId];
+  return [
+    `1. Ne soruyor? ${topic}`,
+    `${testId === "matematik" ? "2. İşlem adımları" : testId === "fen" ? "2. Kural/formül uygulaması" : "2. Görsel/metindeki ana ipucu"}: ${detail}`,
+    `3. Nasıl düşünmelisin? ${guide[0]} ${guide[1]}`,
+    `4. Eleme mantığı: ${guide[2]}`,
+    `${testId === "matematik" ? "5. Sonuç: İşlem sorunun istediği değeri verir ve doğru seçenek" : testId === "fen" ? "5. Sonuç: Kuralı uygulayınca doğru seçenek" : "5. Sonuç: Bu elemeden sonra doğru seçenek"} ${answer} ${testId === "matematik" || testId === "fen" ? "olur." : "kalır."}`,
+  ];
+}
+
 for (const test of tests) {
   const section = document.createElement("section");
   section.className = "test-section";
@@ -327,15 +361,28 @@ for (const test of tests) {
   const cards = test.answers
     .map((answer, index) => {
       const page = pageFor[test.id][index];
+      const pagePath = `assets/pages/page-${String(page).padStart(2, "0")}.jpg`;
+      const steps = buildSteps(test.id, test.topics[index], test.details[index], answer)
+        .map((step) => `<li>${step}</li>`)
+        .join("");
       return `
         <article class="solution-card">
           <div class="solution-top">
             <h3 class="q-title">${index + 1}. Soru</h3>
             <span class="answer-badge">Cevap: ${answer}</span>
           </div>
+          <figure class="question-figure">
+            <a href="${pagePath}" target="_blank" rel="noreferrer">
+              <img loading="lazy" src="${pagePath}" alt="${test.title} ${index + 1}. sorunun bulunduğu sayfa ${page}" />
+            </a>
+            <figcaption>Bu sorunun bulunduğu orijinal görsel: Sayfa ${page}. Büyütmek için görsele dokun.</figcaption>
+          </figure>
           <p><strong>Soru tipi:</strong> ${test.topics[index]}</p>
-          <p class="steps"><strong>Çözüm:</strong> ${test.details[index]}</p>
-          <a class="source-link" href="#page-${page}">Soru görseli: Sayfa ${page}</a>
+          <div class="steps">
+            <strong>Detaylı çözüm:</strong>
+            <ol>${steps}</ol>
+          </div>
+          <a class="source-link" href="#page-${page}">Sayfa ${page} görseller bölümüne git</a>
         </article>
       `;
     })
